@@ -1,0 +1,78 @@
+HTML<!-- templates/index.html: Frontend HTML with form and JavaScript for dynamic interaction. -->
+<!-- Uses inline CSS for simplicity and good UX (typography, spacing, layout). -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recipe Suggestion Agent</title>
+    <style>
+        /* Basic styling for clean, responsive design. */
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: auto; padding: 20px; }
+        form { margin-bottom: 20px; }
+        input, textarea { width: 100%; padding: 10px; margin: 10px 0; }
+        button { padding: 10px 20px; background: #4CAF50; color: white; border: none; cursor: pointer; }
+        #result { border: 1px solid #ddd; padding: 20px; display: none; }  /* Hidden by default, shown on success. */
+        h2 { margin-top: 0; }
+    </style>
+</head>
+<body>
+    <h1>Recipe Suggestion Agent</h1>
+    <p>Enter your available ingredients and any preferences (e.g., vegan, quick prep).</p>
+    <!-- Form for user input; submits via JS to avoid page reload. -->
+    <form id="recipeForm">
+        <label for="ingredients">Ingredients (comma-separated):</label>
+        <input type="text" id="ingredients" name="ingredients" required>
+        
+        <label for="preferences">Preferences:</label>
+        <input type="text" id="preferences" name="preferences">
+        
+        <button type="submit">Suggest Recipe</button>
+    </form>
+    
+    <!-- Result display section; populated by JS. -->
+    <div id="result">
+        <h2>Suggested Recipe</h2>
+        <p><strong>Name:</strong> <span id="name"></span></p>
+        <p><strong>Ingredients:</strong> <ul id="ingredientsList"></ul></p>
+        <p><strong>Instructions:</strong> <ol id="instructionsList"></ol></p>
+        <p><strong>Prep Time:</strong> <span id="prepTime"></span></p>
+        <p><strong>Dietary Notes:</strong> <span id="notes"></span></p>
+    </div>
+
+    <script>
+        // JavaScript for handling form submit asynchronously.
+        document.getElementById('recipeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();  // Prevent default form submit (page reload).
+            const formData = new FormData(e.target);  // Collect form data.
+            const response = await fetch('/suggest', {  // POST to backend API.
+                method: 'POST',
+                body: formData
+            });
+            if (response.ok) {  // On success, parse JSON and update DOM.
+                const data = await response.json();
+                document.getElementById('name').textContent = data.recipe_name;
+                const ingList = document.getElementById('ingredientsList');
+                ingList.innerHTML = '';  // Clear previous list.
+                data.required_ingredients.forEach(ing => {
+                    const li = document.createElement('li');
+                    li.textContent = ing;
+                    ingList.appendChild(li);
+                });
+                const instList = document.getElementById('instructionsList');
+                instList.innerHTML = '';  // Clear previous list.
+                data.instructions.forEach(inst => {
+                    const li = document.createElement('li');
+                    li.textContent = inst;
+                    instList.appendChild(li);
+                });
+                document.getElementById('prepTime').textContent = data.prep_time;
+                document.getElementById('notes').textContent = data.dietary_notes;
+                document.getElementById('result').style.display = 'block';  // Show result div.
+            } else {
+                alert('Error generating recipe. Try again.');  // Basic error handling.
+            }
+        });
+    </script>
+</body>
+</html>
